@@ -1,0 +1,63 @@
+#!/usr/bin/env python
+#coding:utf8
+import Queue,time
+from base import logger,config
+import threading, json
+from makesql import Make_Exec_Sql as sql
+
+
+class test(object):
+    def __init__(self):
+	self.maxsize = int(config.get('queue','maxsize'))
+	self.queue = Queue.Queue(maxsize=self.maxsize)
+	self.file = config.get('queue','temp_file')+"/"+"insert"+"-"+time.strftime('%Y-%m-%d')
+	self.limit = int(config.get('queue','limit'))
+	self.usual = int(config.get('queue','usual'))
+	self.all = int(config.get('queue','all'))
+	self.sql = sql()
+	
+	self.f = self.insert()
+	self.run()
+    def put(self,data):
+	if self.queue.full():
+	   #print 'write %s to %s' %(data,self.file)
+	   self.f.write('%s\n' %data)
+	else:
+	   self.queue.put(data) 
+
+    def get(self):
+	while True:
+	    queue_data = []
+	    if self.queue.qsize() >self.limit:
+		for i in range(self.queue.qsize()):
+		   queue_data.append(json.loads(self.queue.get())) 
+	    self.send(queue_data)
+	    time.sleep(self.usual) 	
+    
+    def crontab(self):
+	while True:
+	     queue_data = []
+	     if self.queue.qsize()>0:
+		for i in range(self.queue.qsize()):
+		    queue_data.append(json.loads(self.queue.get()))
+	     self.send(queue_data)
+	     time.sleep(self.all)
+
+    def send(self,data):
+	if not data:
+	     return
+	self.sql.parser(data)
+    
+    def insert(self):
+	f = open(self.file,'a+')
+	return f
+
+    def run(self):
+	func = [self.get,self.crontab]
+	do = []
+	for i in range(len(func)):
+	    do.append(threading.Thread(target = func[i]))
+	for t in do:
+	    t.setDaemon(True)
+	    t.start()
+	
