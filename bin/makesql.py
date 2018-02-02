@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 from base import logger,config
-import sys,json
+import sys,json,time
 from collections import OrderedDict
 from crontab import table
 from db import Mysql
@@ -12,7 +12,8 @@ class Make_Exec_Sql(object):
 	self.mysql = Mysql()
 	self.table_column = self.table_framework()
 	self.sql = self.combination()
-	self.file = config.get('db','fail')
+	self.file = config.get('db','fail') + "/insert-failed-%s.log" %(time.strftime('%Y-%m-%d'))
+	self.write()
 
     def combination(self):
 	length = len(self.table_column)
@@ -43,6 +44,7 @@ class Make_Exec_Sql(object):
 
     def table_framework(self):
 	sql = 'desc %s.%s;' %(self.database,self.table)
+	table_info = []
 	try:
 		table_info = self.mysql.getAll(sql)
 	except Exception,e:

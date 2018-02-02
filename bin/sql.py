@@ -25,5 +25,4 @@ create table if not exists `%s` (
   KEY `index_username` (`username`)
 ) ENGINE=%s DEFAULT CHARSET=utf8
 ''' %(table,engine)
-print sql
 mysql._cursor.execute(sql)

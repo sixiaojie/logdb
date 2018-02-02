@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #coding:utf8
 
-from base import config,mysql,logger
+from base import config,logger
 import time, sys
 project_name = config.get('project','name')
 if config.get('refresh','shift_table') =="day":
