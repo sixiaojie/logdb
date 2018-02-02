@@ -6,7 +6,7 @@ if [ ! -L $APP_HOME/bin/$bin ];then
 	ln -s $APP_HOME/bin/server.py $APP_HOME/bin/$bin
 fi
 start() {
-    nohup $bin >$APP_HOME/start.log 2>&1 &
+    nohup $APP_HOME/bin/$bin >>$APP_HOME/start.log 2>&1 &
 }
 stop() {
    count=`ps -ef|grep -v grep|grep $bin|wc -l`
@@ -26,6 +26,7 @@ status() {
 
 deploy() {
 	crontab -l >/tmp/.crontab.test
+	python $APP_HOME/bin/sql.py
 	echo "59 23 * * * python $APP_HOME/bin/sql.py" >>/tmp/.crontab.test
 	crontab /tmp/.crontab.test	
 }
