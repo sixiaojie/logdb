@@ -12,6 +12,7 @@ class test(object):
 	self.queue = Queue.Queue(maxsize=self.maxsize)
 	self.file = config.get('queue','temp_file')+"/"+"insert"+"-"+time.strftime('%Y-%m-%d')
 	self.limit = int(config.get('queue','limit'))
+	self.lock = threading.Lock()
 	self.usual = float(config.get('queue','usual'))
 	self.all = float(config.get('queue','all'))
 	self.sql = sql()
@@ -30,9 +31,11 @@ class test(object):
 	while True:
 	    queue_data = []
 	    if self.queue.qsize() >self.limit:
-		for i in range(self.queue.qsize()):
-		   queue_data.append(json.loads(self.queue.get())) 
-	    self.send(queue_data)
+		if self.lock.acquire(False):
+		    for i in range(self.queue.qsize()):
+		   	 queue_data.append(json.loads(self.queue.get(timeout=1))) 
+		    self.lock.release()
+	    	    self.send(queue_data)
 	    time.sleep(self.usual) 	
     
     def crontab(self):
@@ -43,9 +46,11 @@ class test(object):
     def Get_Queue_Into_Db(self):
 	queue_data = []
 	if self.queue.qsize()>0:
-	    for i in range(self.queue.qsize()):
-		queue_data.append(json.loads(self.queue.get()))
-	self.send(queue_data)
+	  if self.lock.acquire(False):
+	      for i in range(self.queue.qsize()):
+		   queue_data.append(json.loads(self.queue.get(timeout=1)))
+	      self.lock.release()
+	      self.send(queue_data)
 
     def send(self,data):
 	if not data:
